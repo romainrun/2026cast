@@ -182,10 +182,28 @@
         castReceiverOptions.customNamespaces = {};
         castReceiverOptions.customNamespaces[NAMESPACE] = cast.framework.system.MessageType.JSON;
         
+        // Add connection event listeners for debugging
+        context.addCustomMessageListener(NAMESPACE, (event) => {
+            console.log('📨 Message received from sender:', event.data);
+            try {
+                const data = JSON.parse(event.data);
+                console.log('✅ Parsed countdown data:', data);
+                updateCountdown(data);
+            } catch (e) {
+                console.error('❌ Error parsing countdown data:', e);
+            }
+        });
+        
+        // Listen for sender connected
+        context.addCustomMessageListener('urn:x-cast:com.google.cast.system', (event) => {
+            console.log('🔌 System message:', event.data);
+        });
+        
         // Start Cast receiver
         context.start(castReceiverOptions);
         
-        console.log('2026 Countdown Cast Receiver started');
+        console.log('✅ 2026 Countdown Cast Receiver started');
+        console.log('📡 Listening for messages on namespace:', NAMESPACE);
     </script>
 </body>
 </html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Countdown - Cast Receiver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(180deg, #050819 0%, #070B20 50%, #0A0F2A 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            text-align: center;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .title {
+            font-size: 120px;
+            font-weight: bold;
+            background: linear-gradient(180deg, #FFB347 0%, #F6A21A 50%, #E57C00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 60px;
+            text-shadow: 0 0 60px rgba(246, 162, 26, 0.6);
+        }
+        
+        .countdown {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            margin-bottom: 60px;
+        }
+        
+        .time-segment {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .time-value {
+            font-size: 96px;
+            font-weight: bold;
+            background: linear-gradient(180deg, #FFB347 0%, #F6A21A 50%, #E57C00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(246, 162, 26, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .time-label {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .progress-bar {
+            width: 80%;
+            max-width: 1200px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F6A21A 0%, #FFB347 100%);
+            transition: width 1s linear;
+            box-shadow: 0 0 20px rgba(246, 162, 26, 0.6);
+        }
+        
+        .status {
+            margin-top: 40px;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 80px;
+            }
+            
+            .time-value {
+                font-size: 64px;
+            }
+            
+            .countdown {
+                gap: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">2026</div>
+        
+        <div class="countdown" id="countdown">
+            <div class="time-segment">
+                <div class="time-value" id="days">00</div>
+                <div class="time-label">Days</div>
+            </div>
+            <div class="time-segment">
+                <div class="time-value" id="hours">00</div>
+                <div class="time-label">Hours</div>
+            </div>
+            <div class="time-segment">
+                <div class="time-value" id="minutes">00</div>
+                <div class="time-label">Minutes</div>
+            </div>
+            <div class="time-segment">
+                <div class="time-value" id="seconds">00</div>
+                <div class="time-label">Seconds</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress" style="width: 0%"></div>
+        </div>
+        
+        <div class="status" id="status">Waiting for countdown data...</div>
+    </div>
+    
+    <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script>
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const NAMESPACE = 'urn:x-cast:com.kns.resolutions.countdown';
+        
+        const playerManager = context.getPlayerManager();
+        
+        // Listen for custom messages from sender
+        context.addCustomMessageListener(NAMESPACE, (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                updateCountdown(data);
+            } catch (e) {
+                console.error('Error parsing countdown data:', e);
+            }
+        });
+        
+        function updateCountdown(data) {
+            // Update countdown display
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+            const progressEl = document.getElementById('progress');
+            const statusEl = document.getElementById('status');
+            
+            if (daysEl) daysEl.textContent = String(data.days || 0).padStart(2, '0');
+            if (hoursEl) hoursEl.textContent = String(data.hours || 0).padStart(2, '0');
+            if (minutesEl) minutesEl.textContent = String(data.minutes || 0).padStart(2, '0');
+            if (secondsEl) secondsEl.textContent = String(data.seconds || 0).padStart(2, '0');
+            
+            const progress = Math.min(100, Math.max(0, (data.progress || 0) * 100));
+            if (progressEl) progressEl.style.width = progress + '%';
+            
+            if (statusEl) statusEl.textContent = 'Countdown to 2026';
+        }
+        
+        // Handle connection events
+        const castReceiverOptions = new cast.framework.CastReceiverOptions();
+        castReceiverOptions.customNamespaces = {};
+        castReceiverOptions.customNamespaces[NAMESPACE] = cast.framework.system.MessageType.JSON;
+        
+        // Start Cast receiver
+        context.start(castReceiverOptions);
+        
+        console.log('2026 Countdown Cast Receiver started');
+    </script>
+</body>
+</html>
+
